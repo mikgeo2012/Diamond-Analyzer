@@ -1,0 +1,15 @@
+This is a diamond price analyzing app.
+
+There are two projects which encompass this app. The first is in the folder FP-Producer and this is responsible for gathering data and routing it to the client. The data right now is sample data files put into the data/old folder but my app can accept additional files being added to the folder and processes them in the order that they come so it can be easily adapted to real-time data.
+
+The DataProducerEndpoint class pulls data from the data/old folder using a splitter to seperate them into individual messages and then uses a message translator to attach a uuid to the message. It then sends this message to a queue via a point-to-point channel. From their, the InstituteRouter class which is a content-based-router segments the messages off the queue depending on which institute certified them (GIA or AGS) and send the message to a corresponding topic. 
+
+DataProducerEndpoint and InstituteRouter are both observers of the Broker class using the Observer design pattern. The Broker classes watches the data/ folder for any new files that appear and then processes them via the two observers and moves the file to the data/old folder.
+
+The client side is the second project of this app and is in the FP-Client folder. Here we have the user enter their desired diamond data into stdin and the Endpoint class which is subscribed to whichever institute is chosen pulls in all the data that matches the criteriaas a selective consumer. Then data analysis is done through facades and using a template method for the different type of users depending on their institute of choice. Both User classes gather the data and send it to a processor which sends it to an analyzer to determine the most top 10 most optimum diamonds by way of best price/carat value. It does this by calculating a convex hull of the dataset and ranking all the data points to that convex hull. I needed to make the User class a singleton in order to use the Endpoint class.
+
+The top 10 diamonds are written to a file in the data/ folder of the project and the app keeps running and only creates a new file when the top 10 diamond list has been updated. 
+
+In order to test and run the file you should first start the FP-Client project by running the main method of the Client class. It will prompt you to enter the diamond preferences of Institute, Color, Cut, Clarity in that order. The sample dat allows for the following choices [GIA, GIA, GIA, AGS], [G,H, I, J], [Excellent, Excellent, Excellent, Ideal], [VS1, VVS2, VS2, VVS1]. WHere each index of each array represents the corresponding attribute of the diamond . So overall 4 choices have been hardcoded in but the app is suited for any number.
+
+After typing in the attributes the Client endpoint will subscribe and run so you will need to run the main method of the Broker class in FP-Producer in a seperate terminal. This will automatically route data to the client and results will appear in the client data folder.   
